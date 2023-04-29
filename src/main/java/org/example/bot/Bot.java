@@ -1,14 +1,15 @@
-package org.example;
+package org.example.bot;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.example.config.TelegramConfig;
+import org.example.database.DataBaseOperations;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.File;
-import java.util.logging.Logger;
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -17,16 +18,11 @@ public class Bot extends TelegramLongPollingBot {
     private final String BOT_TOKEN = telegramConfig.getBotToken();
     private final String BOT_NAME = telegramConfig.getBotName();
 
-    private ParseFile parseFile = new ParseFile();
-    private Storage storage = new Storage();
+    private DataBaseOperations dataBaseOperations = new DataBaseOperations();
 
-    private final static Logger logger = Logger.getLogger("fork_worker");
+    private final static Logger LOGGER = LogManager.getLogger("send");
 
     private Keyboard keyboard = new Keyboard();
-
-    public Bot() {
-        Storage storage = new Storage();
-    }
 
     @Override
     public String getBotUsername() {
@@ -46,8 +42,8 @@ public class Bot extends TelegramLongPollingBot {
             String response = parseMessage(inMess.getText());
             SendMessage outMess = new SendMessage();
 
-            logger.info("Отправлено сообщение: " + update.getMessage().getText());
-            logger.info("Получено сообщение: " + response);
+            LOGGER.info("Отправлено сообщение: " + update.getMessage().getText());
+            LOGGER.info("Получено сообщение: " + response);
 
             outMess.setReplyMarkup(keyboard.initKeyboard());
             outMess.setChatId(chatId);
@@ -67,7 +63,7 @@ public class Bot extends TelegramLongPollingBot {
         if (textMsg.equals("/start"))
             response = "Приветствую, бот знает много цитат. Жми /get, чтобы получить случайную из них";
         else if (textMsg.equals("/get") || textMsg.equals("Просвяти"))
-            response = storage.getRandomPhrase();
+            response = dataBaseOperations.getPhraseAndAuthor();
         else
             response = "Сообщение не распознано";
         return response;
