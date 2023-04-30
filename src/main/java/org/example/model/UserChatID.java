@@ -17,13 +17,12 @@ public class UserChatID {
     private int id;
 
     @Column(name = "chat_id")
-    private String chatId;
+    private long chatId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    public UserChatID(long chatId) {
+        this.chatId = chatId;
+    }
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "time_zone")
-    private LocalDateTime timeZone;
+    public UserChatID() {
+    }
 }

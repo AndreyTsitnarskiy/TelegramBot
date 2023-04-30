@@ -2,10 +2,12 @@ package org.example.database;
 
 import org.example.model.OldPhrase;
 import org.example.model.Phrase;
+import org.example.model.UserChatID;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 
@@ -40,6 +42,14 @@ public class DataBaseOperations {
 
     private long countRows() {
         return session.createQuery("select count(*) from Phrase", Long.class).getSingleResult();
+    }
+
+    public void addUserChatIdTimeZone(long chatId) {
+        session.save(new UserChatID(chatId));
+    }
+
+    public List<Long> getUserChatIds() {
+        return session.createQuery("select chatId from UserChatID", Long.class).getResultList();
     }
 
     public void close() {

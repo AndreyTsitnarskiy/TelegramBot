@@ -10,6 +10,12 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -38,34 +44,37 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             Message inMess = update.getMessage();
-            String chatId = inMess.getChatId().toString();
-            String response = parseMessage(inMess.getText());
-            SendMessage outMess = new SendMessage();
+            long chatId = inMess.getChatId();
 
-            LOGGER.info("Отправлено сообщение: " + update.getMessage().getText());
-            LOGGER.info("Получено сообщение: " + response);
+            if (inMess.getText().equals("/start")) {
+                dataBaseOperations.addUserChatIdTimeZone(chatId);
+                String response = "Вы успешно подписались на нашего бота, бот умеет отправлять сообщения" +
+                        "с цитатами известных личностей в течении дня!";
+                SendMessage messageToUser = new SendMessage();
+                messageToUser.setChatId(String.valueOf(chatId));
+                messageToUser.setText(response);
+                try {
+                    execute(messageToUser);
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
-            outMess.setReplyMarkup(keyboard.initKeyboard());
-            outMess.setChatId(chatId);
-            outMess.setText(response);
+        }
+    }
 
+    public void parseMessage() {
+        String message = dataBaseOperations.getPhraseAndAuthor();
+        List<Long> userChatIds = dataBaseOperations.getUserChatIds();
+        for (Long chatId : userChatIds) {
+            SendMessage messageToUser = new SendMessage();
+            messageToUser.setChatId(String.valueOf(chatId));
+            messageToUser.setText(message);
             try {
-                execute(outMess);
+                execute(messageToUser);
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    public String parseMessage(String textMsg) {
-        String response;
-
-        if (textMsg.equals("/start"))
-            response = "Приветствую, бот знает много цитат. Жми /get, чтобы получить случайную из них";
-        else if (textMsg.equals("/get") || textMsg.equals("Просвяти"))
-            response = dataBaseOperations.getPhraseAndAuthor();
-        else
-            response = "Сообщение не распознано";
-        return response;
     }
 }
