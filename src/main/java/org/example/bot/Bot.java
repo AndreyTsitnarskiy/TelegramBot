@@ -9,13 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-
-import java.time.LocalDateTime;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -26,7 +20,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private DataBaseOperations dataBaseOperations = new DataBaseOperations();
 
-    private final static Logger LOGGER = LogManager.getLogger("send");
+    private final Logger LOGGER = LogManager.getLogger("send");
 
     private Keyboard keyboard = new Keyboard();
 
@@ -64,15 +58,18 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public void parseMessage() {
+        LOGGER.info("INT PARSE MESSAGE");
         String message = dataBaseOperations.getPhraseAndAuthor();
         List<Long> userChatIds = dataBaseOperations.getUserChatIds();
         for (Long chatId : userChatIds) {
             SendMessage messageToUser = new SendMessage();
             messageToUser.setChatId(String.valueOf(chatId));
             messageToUser.setText(message);
+            LOGGER.info("SEND MESSAGE " + messageToUser);
             try {
                 execute(messageToUser);
             } catch (TelegramApiException e) {
+                LOGGER.info(e.getMessage());
                 throw new RuntimeException(e);
             }
         }

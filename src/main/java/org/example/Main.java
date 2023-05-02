@@ -17,18 +17,17 @@ public class Main {
 
         try {
             TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-            telegramBotsApi.registerBot(new Bot());
+            Bot bot = new Bot();
+            telegramBotsApi.registerBot(bot);
 
             Timer timer = new Timer();
 
             LocalTime currentTime = LocalTime.now();
-
             long initialDelay = calculateInitialDelay(currentTime);
 
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    Bot bot = new Bot();
                     bot.parseMessage();
                 }
             }, initialDelay, 24 * 60 * 60 * 1000);
@@ -41,38 +40,27 @@ public class Main {
 
     private static long calculateInitialDelay(LocalTime currentTime) {
         // Задаем желаемые времена
-        LocalTime time1 = LocalTime.of(10, 0);
-        LocalTime time2 = LocalTime.of(12, 0);
-        LocalTime time3 = LocalTime.of(14, 0);
-        LocalTime time4 = LocalTime.of(16, 0);
-        LocalTime time5 = LocalTime.of(18, 0);
-        LocalTime time6 = LocalTime.of(20, 0);
+        LocalTime time1 = LocalTime.of(21, 44);
+        LocalTime time2 = LocalTime.of(21, 45);
+        LocalTime time3 = LocalTime.of(21, 47);
+        LocalTime time4 = LocalTime.of(21, 49);
+        LocalTime time5 = LocalTime.of(21, 51);
+        LocalTime time6 = LocalTime.of(21, 53);
 
-        if (currentTime.isBefore(time1)) {
-            return calculateDelay(currentTime, time1);
+        long minDelay = Long.MAX_VALUE;
+        for (LocalTime targetTime : new LocalTime[]{time1, time2, time3, time4, time5, time6}) {
+            long delay = calculateDelay(currentTime, targetTime);
+            if (delay < minDelay) {
+                minDelay = delay;
+            }
         }
-        else if (currentTime.isBefore(time2)) {
-            return calculateDelay(currentTime, time2);
-        }
-        else if (currentTime.isBefore(time3)) {
-            return calculateDelay(currentTime, time3);
-        }
-        else if (currentTime.isBefore(time4)) {
-            return calculateDelay(currentTime, time3);
-        }
-        else if (currentTime.isBefore(time5)) {
-            return calculateDelay(currentTime, time3);
-        }
-        else if (currentTime.isBefore(time6)) {
-            return calculateDelay(currentTime, time3);
-        }
-        return 0;
+        return minDelay;
     }
 
     private static long calculateDelay(LocalTime currentTime, LocalTime targetTime) {
         LocalDateTime currentDateTime = LocalDateTime.now();
         LocalDateTime targetDateTime = LocalDateTime.of(currentDateTime.toLocalDate(), targetTime);
-        if (targetTime.isBefore(currentTime)) {
+        if (targetTime.isBefore(currentTime) || targetTime.equals(currentTime)) {
             targetDateTime = targetDateTime.plusDays(1);
         }
         return Duration.between(currentDateTime, targetDateTime).toMillis();
