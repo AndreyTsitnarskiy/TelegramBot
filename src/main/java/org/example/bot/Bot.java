@@ -1,15 +1,18 @@
 package org.example.bot;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.example.config.TelegramConfig;
-import org.example.database.DataBaseOperations;
+import org.example.database.DatabaseManager;
+import org.example.model.OldPhrase;
+import org.example.model.Phrase;
+import org.example.model.UserChatID;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
 import java.util.List;
+import java.util.Random;
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -18,9 +21,7 @@ public class Bot extends TelegramLongPollingBot {
     private final String BOT_TOKEN = telegramConfig.getBotToken();
     private final String BOT_NAME = telegramConfig.getBotName();
 
-    private DataBaseOperations dataBaseOperations = new DataBaseOperations();
-
-    private final Logger LOGGER = LogManager.getLogger("send");
+    private final DatabaseManager databaseManager = new DatabaseManager();
 
     private Keyboard keyboard = new Keyboard();
 
@@ -41,7 +42,8 @@ public class Bot extends TelegramLongPollingBot {
             long chatId = inMess.getChatId();
 
             if (inMess.getText().equals("/start")) {
-                dataBaseOperations.addUserChatIdTimeZone(chatId);
+                UserChatID userChatId = new UserChatID(chatId);
+                databaseManager.addUserChatId(userChatId);
                 String response = "Вы успешно подписались на нашего бота, бот умеет отправлять сообщения" +
                         "с цитатами известных личностей в течении дня!";
                 SendMessage messageToUser = new SendMessage();
@@ -57,21 +59,31 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public void parseMessage() {
-        LOGGER.info("INT PARSE MESSAGE");
-        String message = dataBaseOperations.getPhraseAndAuthor();
-        List<Long> userChatIds = dataBaseOperations.getUserChatIds();
+    public void sendRandomPhraseToAllUsers() {
+        int randomNumber = RandomNumber();
+        Phrase randomPhrase = databaseManager.getRandomPhrases(randomNumber);
+        databaseManager.saveOldPhrase(randomPhrase);
+        List<Long> userChatIds = databaseManager.getUserChatIds();
         for (Long chatId : userChatIds) {
-            SendMessage messageToUser = new SendMessage();
-            messageToUser.setChatId(String.valueOf(chatId));
-            messageToUser.setText(message);
-            LOGGER.info("SEND MESSAGE " + messageToUser);
+            SendMessage message = new SendMessage();
+            message.setChatId(String.valueOf(chatId));
+            message.setText(adapterPhrase(randomPhrase));
             try {
-                execute(messageToUser);
+                execute(message);
             } catch (TelegramApiException e) {
-                LOGGER.info(e.getMessage());
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
+        databaseManager.deletePhrase(randomPhrase);
+        databaseManager.close();
+    }
+
+    private int RandomNumber() {
+        List<Integer> phraseIds = databaseManager.getPhraseIds();
+        return phraseIds.get(new Random().nextInt(phraseIds.size()));
+    }
+
+    private String adapterPhrase(Phrase phrase) {
+        return phrase.getPhrase() + "\n\n" + phrase.getAuthor();
     }
 }

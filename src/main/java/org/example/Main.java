@@ -1,6 +1,10 @@
 package org.example;
 
 import org.example.bot.Bot;
+import org.example.bot.SendMessageJob;
+import org.quartz.*;
+import org.quartz.impl.StdScheduler;
+import org.quartz.impl.StdSchedulerFactory;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -10,59 +14,59 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SchedulerException {
 
         try {
             TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
             Bot bot = new Bot();
             telegramBotsApi.registerBot(bot);
 
-            Timer timer = new Timer();
+            SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+            Scheduler scheduler = schedulerFactory.getScheduler();
 
-            LocalTime currentTime = LocalTime.now();
-            long initialDelay = calculateInitialDelay(currentTime);
+            scheduler.start();
 
-            timer.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    bot.parseMessage();
-                }
-            }, initialDelay, 24 * 60 * 60 * 1000);
+            Trigger trigger = TriggerBuilder.newTrigger().withIdentity("send_08_00")
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 54)).build();
+
+            Trigger trigger1 = TriggerBuilder.newTrigger().withIdentity("send_10_00")
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 55)).build();
+
+            Trigger trigger2 = TriggerBuilder.newTrigger().withIdentity("send_14_00")
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 56)).build();
+
+            Trigger trigger3 = TriggerBuilder.newTrigger().withIdentity("send_16_00")
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 56)).build();
+
+            Trigger trigger4 = TriggerBuilder.newTrigger().withIdentity("send_18_00")
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 56)).build();
+
+            JobDetail job = JobBuilder.newJob(SendMessageJob.class)
+                    .withIdentity("sendMessageJob_08_00" + UUID.randomUUID(), "group1")
+                    .build();
+            JobDetail job1 = JobBuilder.newJob(SendMessageJob.class)
+                    .withIdentity("sendMessageJob_10_00" + UUID.randomUUID(), "group1")
+                    .build();
+            JobDetail job2 = JobBuilder.newJob(SendMessageJob.class)
+                    .withIdentity("sendMessageJob_14_00" + UUID.randomUUID(), "group1")
+                    .build();
+            JobDetail job3 = JobBuilder.newJob(SendMessageJob.class)
+                    .withIdentity("sendMessageJob_16_00" + UUID.randomUUID(), "group1")
+                    .build();
+            JobDetail job4 = JobBuilder.newJob(SendMessageJob.class)
+                    .withIdentity("sendMessageJob_18_00" + UUID.randomUUID(), "group1")
+                    .build();
+
+
+            scheduler.scheduleJob(job, trigger);
+            scheduler.scheduleJob(job1, trigger1);
+            scheduler.scheduleJob(job2, trigger2);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-
-    }
-
-
-    private static long calculateInitialDelay(LocalTime currentTime) {
-        // Задаем желаемые времена
-        LocalTime time1 = LocalTime.of(21, 44);
-        LocalTime time2 = LocalTime.of(21, 45);
-        LocalTime time3 = LocalTime.of(21, 47);
-        LocalTime time4 = LocalTime.of(21, 49);
-        LocalTime time5 = LocalTime.of(21, 51);
-        LocalTime time6 = LocalTime.of(21, 53);
-
-        long minDelay = Long.MAX_VALUE;
-        for (LocalTime targetTime : new LocalTime[]{time1, time2, time3, time4, time5, time6}) {
-            long delay = calculateDelay(currentTime, targetTime);
-            if (delay < minDelay) {
-                minDelay = delay;
-            }
-        }
-        return minDelay;
-    }
-
-    private static long calculateDelay(LocalTime currentTime, LocalTime targetTime) {
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        LocalDateTime targetDateTime = LocalDateTime.of(currentDateTime.toLocalDate(), targetTime);
-        if (targetTime.isBefore(currentTime) || targetTime.equals(currentTime)) {
-            targetDateTime = targetDateTime.plusDays(1);
-        }
-        return Duration.between(currentDateTime, targetDateTime).toMillis();
     }
 }
