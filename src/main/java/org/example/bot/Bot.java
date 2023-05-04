@@ -2,7 +2,8 @@ package org.example.bot;
 
 import org.example.config.TelegramConfig;
 import org.example.database.DatabaseManager;
-import org.example.model.OldPhrase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.example.model.Phrase;
 import org.example.model.UserChatID;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,6 +17,8 @@ import java.util.Random;
 
 public class Bot extends TelegramLongPollingBot {
 
+    private static final Logger SEND_LOGGER = LoggerFactory.getLogger("SEND");
+
     private TelegramConfig telegramConfig = new TelegramConfig();
 
     private final String BOT_TOKEN = telegramConfig.getBotToken();
@@ -23,7 +26,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private final DatabaseManager databaseManager = new DatabaseManager();
 
-    private Keyboard keyboard = new Keyboard();
+    //private Keyboard keyboard = new Keyboard();
 
     @Override
     public String getBotUsername() {
@@ -62,7 +65,10 @@ public class Bot extends TelegramLongPollingBot {
     public void sendRandomPhraseToAllUsers() {
         int randomNumber = RandomNumber();
         Phrase randomPhrase = databaseManager.getRandomPhrases(randomNumber);
+        SEND_LOGGER.info("Random id phrase: " + randomNumber);
+        SEND_LOGGER.info("Random phrase: " + randomPhrase.getPhrase());
         databaseManager.saveOldPhrase(randomPhrase);
+        SEND_LOGGER.info("Old phrase " + randomPhrase.getPhrase() + " saved");
         List<Long> userChatIds = databaseManager.getUserChatIds();
         for (Long chatId : userChatIds) {
             SendMessage message = new SendMessage();
@@ -75,6 +81,7 @@ public class Bot extends TelegramLongPollingBot {
             }
         }
         databaseManager.deletePhrase(randomPhrase);
+        SEND_LOGGER.info("Phrase " + randomPhrase.getPhrase() + " deleted");
         databaseManager.close();
     }
 
@@ -84,6 +91,6 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private String adapterPhrase(Phrase phrase) {
-        return phrase.getPhrase() + "\n\n" + phrase.getAuthor();
+        return phrase.getAuthor() + "\n\n" + phrase.getPhrase();
     }
 }

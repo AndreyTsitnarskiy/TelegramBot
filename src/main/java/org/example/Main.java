@@ -3,17 +3,10 @@ package org.example;
 import org.example.bot.Bot;
 import org.example.bot.SendMessageJob;
 import org.quartz.*;
-import org.quartz.impl.StdScheduler;
 import org.quartz.impl.StdSchedulerFactory;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 public class Main {
@@ -31,19 +24,19 @@ public class Main {
             scheduler.start();
 
             Trigger trigger = TriggerBuilder.newTrigger().withIdentity("send_08_00")
-                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 54)).build();
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(21, 47)).build();
 
             Trigger trigger1 = TriggerBuilder.newTrigger().withIdentity("send_10_00")
-                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 55)).build();
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(10, 00)).build();
 
             Trigger trigger2 = TriggerBuilder.newTrigger().withIdentity("send_14_00")
-                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 56)).build();
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(14, 00)).build();
 
             Trigger trigger3 = TriggerBuilder.newTrigger().withIdentity("send_16_00")
-                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 56)).build();
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(16, 00)).build();
 
             Trigger trigger4 = TriggerBuilder.newTrigger().withIdentity("send_18_00")
-                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(23, 56)).build();
+                    .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(18, 00)).build();
 
             JobDetail job = JobBuilder.newJob(SendMessageJob.class)
                     .withIdentity("sendMessageJob_08_00" + UUID.randomUUID(), "group1")
@@ -65,6 +58,8 @@ public class Main {
             scheduler.scheduleJob(job, trigger);
             scheduler.scheduleJob(job1, trigger1);
             scheduler.scheduleJob(job2, trigger2);
+            scheduler.scheduleJob(job3, trigger3);
+            scheduler.scheduleJob(job4, trigger4);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
