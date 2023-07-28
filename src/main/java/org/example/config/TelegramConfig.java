@@ -1,28 +1,18 @@
 package org.example.config;
 
-import org.yaml.snakeyaml.Yaml;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
-import java.io.InputStream;
-import java.util.Map;
-
+@Configuration
+@Data
+@PropertySource("classpath:application.yaml")
 public class TelegramConfig {
+
+    @Value("${telegram.bot-name}")
     private String botName;
+
+    @Value("${telegram.bot-token}")
     private String botToken;
-
-    public TelegramConfig() {
-        Yaml yaml = new Yaml();
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.yaml");
-        Map<String, Object> obj = yaml.load(inputStream);
-        Map<String, Object> telegramObj = (Map<String, Object>) obj.get("telegram");
-        botToken = (String) telegramObj.get("bot-token");
-        botName = (String) telegramObj.get("bot-name");
-    }
-
-    public String getBotToken() {
-        return botToken;
-    }
-
-    public String getBotName() {
-        return botName;
-    }
 }
